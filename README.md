@@ -1,9 +1,12 @@
-Hello,
+The reason why 1d and 2d are working in your MVEL rule expression while 0d is causing an error lies in how MVEL interprets these numeric literals with the d suffix. Here's a breakdown of why this might be happening:
 
-I'm working on improving the response time of fetching datasets in the population UI. Previously, native queries were used, but I've switched to Hibernate queries with join fetch to optimize performance. However, there hasn't been a significant improvement, with only a 10-second reduction.
-
-To address this, I'm considering a different approach:
-
-When calling getdatasets, I'll only include necessary fields in the UI and send the attribute count as the number of columns instead of all attributes.
-This change might impact the getdatasets call during namespace creation. I'll update getdatasetsById in the UI code after fetching datasets from the getdatasets call.
-After making changes to namespace removal, I'll update all getdatasets calls accordingly.
+MVEL Numeric Literal Interpretation:
+In MVEL, numeric literals with a d suffix (1d, 2d, etc.) are typically interpreted as double literals, similar to Java syntax.
+When MVEL encounters 1d, it interprets it as a double value of 1.0.
+Similarly, 2d is interpreted as 2.0.
+Parsing Behavior:
+MVEL's parsing behavior for numeric literals can vary based on the context and the specific version of MVEL you are using.
+While 1d and 2d are interpreted as valid double literals without causing parsing errors, 0d is causing an issue likely due to MVEL treating it as an octal (base 8) number due to the 0 prefix.
+Difference with 0d:
+The specific issue with 0d could be related to how MVEL interprets the combination of 0 (which can be a valid octal prefix) followed by the d suffix.
+The error message [Error: badly formatted number: For input string: "d" under radix 8] suggests that MVEL is trying to parse 0d as an octal number (0 followed by d under base 8), which is not valid and results in a parsing error.
