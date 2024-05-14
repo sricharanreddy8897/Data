@@ -117,3 +117,35 @@ public class MockController {
     }
 }
 
+
+
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class MockService {
+
+    public List<Dealer> getMockDealersWithLeads() {
+        List<Dealer> dealers = new ArrayList<>();
+
+        // Mock data for Dealer 1
+        List<Lead> leads1 = new ArrayList<>();
+        leads1.add(new Lead(1, "Car Gurus", 99999.99, 99999.99));
+        leads1.add(new Lead(2, "AutoTrader", 89999.99, 89999.99));
+        Dealer dealer1 = new Dealer(101, leads1);
+        dealers.add(dealer1);
+
+        // Mock data for Dealer 2
+        List<Lead> leads2 = new ArrayList<>();
+        leads2.add(new Lead(3, "Cars.com", 77777.77, 77777.77));
+        Dealer dealer2 = new Dealer(102, leads2);
+        dealers.add(dealer2);
+
+        // Mock data for Dealer 3 (empty leads list)
+        Dealer dealer3 = new Dealer(103, new ArrayList<>());
+        dealers.add(dealer3);
+
+        return dealers;
+    }
+}
