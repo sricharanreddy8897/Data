@@ -104,3 +104,49 @@ public class MockResponse {
 
     // Method to convert list of LeadSource objects to JSON array
     private static String convertLeadSourcesToJson(List<LeadSource> leadSources) 
+
+
+
+
+
+    import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+
+@Service
+public class MockService {
+
+    public ResponseData getMockResponse(Long dealerId, int month, int year, int offset, int limit) {
+        // Create mock lead source data
+        LeadSource leadSource = new LeadSource(1, "Car Gurus", 99999.99, 99999.99);
+
+        // Create mock pagination data
+        Pagination pagination = new Pagination(1, 1, 1);
+
+        // Create mock response data
+        ResponseData responseData = new ResponseData(Collections.singletonList(leadSource), pagination);
+
+        return responseData;
+    }
+}
+
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+
+@Service
+public class MockService {
+
+    public ResponseData getMockResponse(Long dealerId, int month, int year, int offset, int limit) {
+        // Create mock lead source data
+        LeadSource leadSource = new LeadSource(1, "Car Gurus", 99999.99, 99999.99);
+
+        // Create mock pagination data
+        Pagination pagination = new Pagination(1, 1, 1);
+
+        // Create mock response data
+        ResponseData responseData = new ResponseData(Collections.singletonList(leadSource), pagination);
+
+        return responseData;
+    }
+}
