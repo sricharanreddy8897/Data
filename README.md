@@ -60,3 +60,60 @@ public class MockController {
     }
 }
 
+
+
+
+
+
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class MockService {
+
+    // Simulated data - Replace with actual data retrieval logic
+    private List<Dealer> dealerList = new ArrayList<>();
+
+    public List<Lead> getLeadsByDealerId(Long dealerId) {
+        // Find the dealer with the specified dealerId
+        Dealer dealer = dealerList.stream()
+                                  .filter(d -> d.getDealerId().equals(dealerId))
+                                  .findFirst()
+                                  .orElse(null);
+
+        // Return the list of leads for the dealer (or an empty list if dealer not found)
+        return dealer != null ? dealer.getLeads() : new ArrayList<>();
+    }
+}
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+
+@RestController
+public class MockController {
+
+    private final MockService mockService;
+
+    @Autowired
+    public MockController(MockService mockService) {
+        this.mockService = mockService;
+    }
+
+    @GetMapping("/leadsByDealerId")
+    public ResponseEntity<List<Lead>> getLeadsByDealerId(@RequestParam Long dealerId) {
+        // Call the service to get the list of leads for the specified dealerId
+        List<Lead> leads = mockService.getLeadsByDealerId(dealerId);
+
+        // Return the list of leads with HTTP status 200 (OK)
+        return ResponseEntity.ok(leads);
+    }
+}
+
