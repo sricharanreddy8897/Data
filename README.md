@@ -21,25 +21,22 @@ public class MockService {
         dealers.add(dealer2);
     }
 
-    public List<Lead> getLeadsByDealerId(int dealerId, int pageSize, int currentPage) {
+    public List<Lead> getLeadsByDealerId(int dealerId, int offset, int limit) {
         for (Dealer dealer : dealers) {
             if (dealer.getDealerId() == dealerId) {
                 List<Lead> allLeads = dealer.getLeads();
-                return paginateLeads(allLeads, pageSize, currentPage);
+                return paginateLeads(allLeads, offset, limit);
             }
         }
         return new ArrayList<>(); // Return empty list if dealerId not found
     }
 
-    private List<Lead> paginateLeads(List<Lead> allLeads, int pageSize, int currentPage) {
-        int startIdx = (currentPage - 1) * pageSize;
-        int endIdx = Math.min(startIdx + pageSize, allLeads.size());
-        if (startIdx >= endIdx || startIdx < 0 || currentPage < 1) {
+    private List<Lead> paginateLeads(List<Lead> allLeads, int offset, int limit) {
+        int startIndex = Math.min(offset, allLeads.size());
+        int endIndex = Math.min(offset + limit, allLeads.size());
+        if (startIndex >= endIndex || offset < 0 || limit <= 0) {
             return new ArrayList<>(); // Return empty list for invalid pagination parameters
         }
-        return allLeads.subList(startIdx, endIdx);
-    }
-}
 
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,20 +57,23 @@ public class MockController {
     }
 
     @GetMapping("/leadsByDealerId")
-    public ResponseEntity<ResponseData> getLeadsByDealerId(
+    public ResponseEntity<List<Lead>> getLeadsByDealerId(
             @RequestParam int dealerId,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "1") int currentPage) {
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit) {
 
-        List<Lead> leads = mockService.getLeadsByDealerId(dealerId, pageSize, currentPage);
+        List<Lead> leads = mockService.getLeadsByDealerId(dealerId, offset, limit);
 
         if (!leads.isEmpty()) {
-            Pagination pagination = new Pagination(leads.size(), pageSize, currentPage);
-            ResponseData responseData = new ResponseData(leads, pagination);
-            return ResponseEntity.ok(responseData);
+            return ResponseEntity.ok(leads);
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+}
+
+        
+        return allLeads.subList(startIndex, endIndex);
     }
 }
 
