@@ -5,33 +5,42 @@ import java.util.List;
 @Service
 public class MockService {
 
-    // Simulated list of dealers with leads
     private List<Dealer> dealers = new ArrayList<>();
 
     public MockService() {
-        // Mock data for Dealer 1
+        // Initialize mock data for dealers with leads
         List<Lead> leads1 = new ArrayList<>();
         leads1.add(new Lead(1, "Car Gurus", 99999.99, 99999.99));
         leads1.add(new Lead(2, "AutoTrader", 89999.99, 89999.99));
         Dealer dealer1 = new Dealer(101, leads1);
         dealers.add(dealer1);
 
-        // Mock data for Dealer 2
         List<Lead> leads2 = new ArrayList<>();
         leads2.add(new Lead(3, "Cars.com", 77777.77, 77777.77));
         Dealer dealer2 = new Dealer(102, leads2);
         dealers.add(dealer2);
     }
 
-    public List<Lead> getLeadsByDealerId(int dealerId) {
+    public List<Lead> getLeadsByDealerId(int dealerId, int pageSize, int currentPage) {
         for (Dealer dealer : dealers) {
             if (dealer.getDealerId() == dealerId) {
-                return dealer.getLeads();
+                List<Lead> allLeads = dealer.getLeads();
+                return paginateLeads(allLeads, pageSize, currentPage);
             }
         }
         return new ArrayList<>(); // Return empty list if dealerId not found
     }
+
+    private List<Lead> paginateLeads(List<Lead> allLeads, int pageSize, int currentPage) {
+        int startIdx = (currentPage - 1) * pageSize;
+        int endIdx = Math.min(startIdx + pageSize, allLeads.size());
+        if (startIdx >= endIdx || startIdx < 0 || currentPage < 1) {
+            return new ArrayList<>(); // Return empty list for invalid pagination parameters
+        }
+        return allLeads.subList(startIdx, endIdx);
+    }
 }
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -51,19 +60,21 @@ public class MockController {
     }
 
     @GetMapping("/leadsByDealerId")
-    public ResponseEntity<List<Lead>> getLeadsByDealerId(@RequestParam int dealerId) {
-        // Call the mock service to retrieve leads for the specified dealerId
-        List<Lead> leads = mockService.getLeadsByDealerId(dealerId);
+    public ResponseEntity<ResponseData> getLeadsByDealerId(
+            @RequestParam int dealerId,
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "1") int currentPage) {
+
+        List<Lead> leads = mockService.getLeadsByDealerId(dealerId, pageSize, currentPage);
 
         if (!leads.isEmpty()) {
-            // Return the list of leads with HTTP status 200 (OK) if leads found
-            return ResponseEntity.ok(leads);
+            Pagination pagination = new Pagination(leads.size(), pageSize, currentPage);
+            ResponseData responseData = new ResponseData(leads, pagination);
+            return ResponseEntity.ok(responseData);
         } else {
-            // Return HTTP status 404 (Not Found) if no leads found for the specified dealerId
             return ResponseEntity.notFound().build();
         }
     }
 }
-
 
 
