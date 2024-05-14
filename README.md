@@ -1,35 +1,45 @@
-import java.io.Serializable;
-import javax.persistence.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
 
-@Entity
-@Table(name = "cost_and_gross_details")
-public class CostAndGrossDetails {
-    
-    @Embeddable
-    public static class CostAndGrossDetailsId implements Serializable {
-        @Column(name = "Lead_source_id")
-        private int leadSourceId;
+@Service
+public class DealerService {
 
-        @Column(name = "Dealer_id")
-        private int dealerId;
+    private final CostAndGrossDetailsRepository costAndGrossDetailsRepository;
+    private final LeadMapper leadMapper;
+    private final DealerMapper dealerMapper;
 
-        @Column(name = "Reporting_month")
-        private String reportingMonth;
-
-        // Constructors, equals, and hashCode methods
+    @Autowired
+    public DealerService(CostAndGrossDetailsRepository costAndGrossDetailsRepository, LeadMapper leadMapper, DealerMapper dealerMapper) {
+        this.costAndGrossDetailsRepository = costAndGrossDetailsRepository;
+        this.leadMapper = leadMapper;
+        this.dealerMapper = dealerMapper;
     }
-    
-    @EmbeddedId
-    private CostAndGrossDetailsId id;
 
-    @Column(name = "Source_name")
-    private String sourceName;
+    @Transactional
+    public String processDealerData(DealerDTO dealerDTO) {
+        try {
+            // Map DTO to entity objects
+            CostAndGrossDetails dealerEntity = dealerMapper.toEntity(dealerDTO);
 
-    @Column(name = "Cost")
-    private double cost;
+            List<CostAndGrossDetails> leadEntities = dealerDTO.getLeads().stream()
+                    .map(leadDTO -> {
+                        CostAndGrossDetails leadEntity = leadMapper.toEntity(leadDTO);
+                        leadEntity.setDealerId(dealerEntity.getDealerId());
+                        leadEntity.setReportingMonth(dealerEntity.getMonth() + "-" + dealerEntity.getYear());
+                        return leadEntity;
+                    })
+                    .collect(Collectors.toList());
 
-    @Column(name = "Gross")
-    private double gross;
+            // Save to database
+            costAndGrossDetailsRepository.saveAll(leadEntities);
 
-    // Getters and setters
+            return "Data inserted successfully";
+        } catch (Exception e) {
+            // Handle exception, log error, etc.
+            return "Failed to insert data: " + e.getMessage();
+        }
+    }
 }
