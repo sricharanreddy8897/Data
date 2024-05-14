@@ -150,3 +150,64 @@ public class MockService {
         return responseData;
     }
 }
+
+
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class MockController {
+
+    private final MockService mockService;
+
+    @Autowired
+    public MockController(MockService mockService) {
+        this.mockService = mockService;
+    }
+
+    @GetMapping("/mockEndpoint")
+    public ResponseEntity<ResponseData> getMockData(
+            @RequestParam Long dealerId,
+            @RequestParam int month,
+            @RequestParam int year,
+            @RequestParam int offset,
+            @RequestParam int limit
+    ) {
+        // Call the service to get the mock response data
+        ResponseData mockResponse = mockService.getMockResponse(dealerId, month, year, offset, limit);
+
+        // Return the mock response with HTTP status 200 (OK)
+        return ResponseEntity.ok(mockResponse);
+    }
+}
+
+
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+import java.util.List;
+
+@Service
+public class MockService {
+
+    public ResponseData getMockResponse(Long dealerId, int month, int year, int offset, int limit) {
+        // Create mock lead source data
+        LeadSource leadSource = new LeadSource(1, "Car Gurus", 99999.99, 99999.99);
+
+        // Create mock pagination data
+        Pagination pagination = new Pagination(1, 1, 1);
+
+        // Create mock response data
+        List<LeadSource> leadSources = Collections.singletonList(leadSource);
+        return new ResponseData(leadSources, pagination);
+    }
+}
+
+
