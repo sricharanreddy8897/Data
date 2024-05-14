@@ -1,43 +1,30 @@
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
+import javax.persistence.*;
 
-import java.util.ArrayList;
-import java.util.List;
+@Entity
+@Table(name = "cost_and_gross_details")
+public class CostAndGrossDetails {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
 
-@Service
-public class DealerService {
+    @Column(name = "Lead_source_id")
+    private int leadSourceId;
 
-    private final JdbcTemplate jdbcTemplate;
+    @Column(name = "Source_name")
+    private String sourceName;
 
-    @Autowired
-    public DealerService(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
+    @Column(name = "Cost")
+    private double cost;
 
-    public String processDealerData(DealerDTO dealerDTO) {
-        try {
-            List<Object[]> batchArgs = new ArrayList<>();
+    @Column(name = "Gross")
+    private double gross;
 
-            for (LeadDTO leadDTO : dealerDTO.getLeads()) {
-                Object[] args = {
-                        leadDTO.getLeadSourceId(),
-                        leadDTO.getSourceName(),
-                        leadDTO.getCost(),
-                        leadDTO.getGross(),
-                        dealerDTO.getDealerId(),
-                        dealerDTO.getMonth() + "-" + dealerDTO.getYear() // Assuming reporting month format is MM-yyyy
-                };
-                batchArgs.add(args);
-            }
+    @Column(name = "Dealer_id")
+    private int dealerId;
 
-            String sql = "INSERT INTO cost_and_gross_details (Lead_source_id, Source_name, Cost, Gross, Dealer_id, Reporting_month) VALUES (?, ?, ?, ?, ?, ?)";
-            jdbcTemplate.batchUpdate(sql, batchArgs);
+    @Column(name = "Reporting_month")
+    private String reportingMonth;
 
-            return "Data inserted successfully";
-        } catch (Exception e) {
-            // Handle exception, log error, etc.
-            return "Failed to insert data: " + e.getMessage();
-        }
-    }
+    // Getters and setters
 }
