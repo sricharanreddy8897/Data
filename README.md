@@ -1,33 +1,17 @@
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
-import java.util.stream.Collectors;
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/your_database_name
+    username: your_username
+    password: your_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
-@Service
-public class DealerService {
 
-    private final CostAndGrossDetailsRepository costAndGrossDetailsRepository;
-    private final LeadMapper leadMapper;
-    private final DealerMapper dealerMapper;
-
-    @Autowired
-    public DealerService(CostAndGrossDetailsRepository costAndGrossDetailsRepository, LeadMapper leadMapper, DealerMapper dealerMapper) {
-        this.costAndGrossDetailsRepository = costAndGrossDetailsRepository;
-        this.leadMapper = leadMapper;
-        this.dealerMapper = dealerMapper;
-    }
-
-    @Transactional
-    public String processDealerData(Dealer dealer) {
-        try {
-            // Save to database
-            costAndGrossDetailsRepository.saveAll(dealer.getLeads());
-
-            return "Data inserted successfully";
-        } catch (Exception e) {
-            // Handle exception, log error, etc.
-            return "Failed to insert data: " + e.getMessage();
-        }
-    }
-}
+spring.datasource.url=jdbc:postgresql://localhost:5432/your_database_name
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
