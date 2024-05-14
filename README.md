@@ -1,1 +1,35 @@
-In MNav, we use the fulfillment ID to identify each customer and verify if an email has been sent. We only include the account number in the payload if it exists in the template. Could you please check with the Mercury team to understand how they are sending the account number to Gumbo if it's not included in the payload?
+import java.io.Serializable;
+import javax.persistence.*;
+
+@Entity
+@Table(name = "cost_and_gross_details")
+public class CostAndGrossDetails {
+    
+    @Embeddable
+    public static class CostAndGrossDetailsId implements Serializable {
+        @Column(name = "Lead_source_id")
+        private int leadSourceId;
+
+        @Column(name = "Dealer_id")
+        private int dealerId;
+
+        @Column(name = "Reporting_month")
+        private String reportingMonth;
+
+        // Constructors, equals, and hashCode methods
+    }
+    
+    @EmbeddedId
+    private CostAndGrossDetailsId id;
+
+    @Column(name = "Source_name")
+    private String sourceName;
+
+    @Column(name = "Cost")
+    private double cost;
+
+    @Column(name = "Gross")
+    private double gross;
+
+    // Getters and setters
+}
