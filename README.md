@@ -149,3 +149,31 @@ public class MockService {
         return dealers;
     }
 }
+
+
+import org.springframework.stereotype.Service;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class MockService {
+
+    public ResponseData getMockResponseData() {
+        // Simulated list of dealers with leads
+        List<Dealer> dealers = new ArrayList<>();
+
+        // Mock data for a dealer
+        List<Lead> leads = new ArrayList<>();
+        leads.add(new Lead(1, "Car Gurus", 99999.99, 99999.99));
+
+        Dealer dealer = new Dealer(101, leads, 5, 2024); // Assuming month = 5 (May), year = 2024
+        dealers.add(dealer);
+
+        // Create pagination object
+        Pagination pagination = new Pagination(dealers.size(), 1, 1); // Assuming pageSize = 1, currentPage = 1
+
+        // Create and return the response data
+        return new ResponseData(dealers, pagination);
+    }
+}
+
