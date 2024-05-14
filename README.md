@@ -19,22 +19,10 @@ public class DealerService {
     }
 
     @Transactional
-    public String processDealerData(DealerDTO dealerDTO) {
+    public String processDealerData(Dealer dealer) {
         try {
-            // Map DTO to entity objects
-            CostAndGrossDetails dealerEntity = dealerMapper.toEntity(dealerDTO);
-
-            List<CostAndGrossDetails> leadEntities = dealerDTO.getLeads().stream()
-                    .map(leadDTO -> {
-                        CostAndGrossDetails leadEntity = leadMapper.toEntity(leadDTO);
-                        leadEntity.setDealerId(dealerEntity.getDealerId());
-                        leadEntity.setReportingMonth(dealerEntity.getMonth() + "-" + dealerEntity.getYear());
-                        return leadEntity;
-                    })
-                    .collect(Collectors.toList());
-
             // Save to database
-            costAndGrossDetailsRepository.saveAll(leadEntities);
+            costAndGrossDetailsRepository.saveAll(dealer.getLeads());
 
             return "Data inserted successfully";
         } catch (Exception e) {
