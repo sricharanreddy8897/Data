@@ -3,9 +3,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 @Service
 public class DealerService {
@@ -48,6 +51,22 @@ public class DealerService {
 
         if (dealerId <= 0) {
             throw new IllegalArgumentException("Dealer ID must be a positive integer");
+        }
+
+        Set<Integer> leadSourceIds = new HashSet<>();
+        for (LeadSource lead : dealerCostAndGross.getLeadSources()) {
+            if (lead.getLeadSourceId() <= 0) {
+                throw new IllegalArgumentException("LeadSource ID must be a positive integer");
+            }
+            if (lead.getCost() < 0) {
+                throw new IllegalArgumentException("Cost cannot be negative");
+            }
+            if (lead.getGross() < 0) {
+                throw new IllegalArgumentException("Gross cannot be negative");
+            }
+            if (!leadSourceIds.add(lead.getLeadSourceId())) {
+                throw new IllegalArgumentException("Duplicate LeadSource ID found: " + lead.getLeadSourceId());
+            }
         }
     }
 
