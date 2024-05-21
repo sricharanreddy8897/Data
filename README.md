@@ -1,81 +1,73 @@
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.ResponseEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.*;
 
-@Service
-public class DealerService {
+public class DealerServiceTest {
 
-    private static final Logger log = LoggerFactory.getLogger(DealerService.class);
+    @InjectMocks
+    private DealerService dealerService;
 
-    private final CostAndGrossDetailsRepository costAndGrossDetailsRepository;
+    @Mock
+    private DealerCostAndGross dealerCostAndGross;
 
-    public DealerService(CostAndGrossDetailsRepository costAndGrossDetailsRepository) {
-        this.costAndGrossDetailsRepository = costAndGrossDetailsRepository;
+    @Mock
+    private DealerLeadSourceCostAndGrossEntityRepository repository;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
     }
+}
 
-    @Transactional
-    public ResponseEntity<Void> processDealerData(int dealerId, DealerCostAndGross dealerCostAndGross) {
-        try {
-            // Add Feasible Validations
-            validateInput(dealerId, dealerCostAndGross);
 
-            List<DealerLeadSourceCostAndGrossEntity> entities = dealerCostAndGross.getLeadSources().stream()
-                    .map(lead -> mapToEntity(lead, dealerId))
-                    .collect(Collectors.toList());
 
-            // Find the events for monitoring
-            log.info("Processed {} lead sources for dealer ID {}", entities.size(), dealerId);
+@Test
+public void testProcessDealerData_Success() {
+    // Setup
+    int dealerId = 1;
+    when(dealerCostAndGross.getAllLeadSources(anyInt(), anyInt()))
+        .thenReturn(new ArrayList<>()); // Assuming this method should return a list of entities
+    when(repository.saveAll(any())).thenReturn(null); // Mock the save call
 
-            costAndGrossDetailsRepository.saveAll(entities);
+    // Execute
+    ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
 
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            // Handle exception, log error, etc.
-            log.error("Error while processing dealer data", e);
-            return ResponseEntity.internalServerError().build();
-        }
-    }
+    // Verify
+    assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    verify(repository, times(1)).saveAll(any());
+}
 
-    private void validateInput(int dealerId, DealerCostAndGross dealerCostAndGross) {
-        if (dealerCostAndGross == null || dealerCostAndGross.getLeadSources() == null || dealerCostAndGross.getLeadSources().isEmpty()) {
-            throw new IllegalArgumentException("DealerCostAndGross and its LeadSources cannot be null or empty");
-        }
 
-        if (dealerId <= 0) {
-            throw new IllegalArgumentException("Dealer ID must be a positive integer");
-        }
+@Test
+public void testProcessDealerData_IllegalArgumentException() {
+    // Setup
+    int dealerId = 1;
+    doThrow(new IllegalArgumentException("Invalid argument"))
+        .when(dealerCostAndGross).getAllLeadSources(anyInt(), anyInt());
 
-        Set<Integer> leadSourceIds = new HashSet<>();
-        for (LeadSource lead : dealerCostAndGross.getLeadSources()) {
-            if (lead.getLeadSourceId() <= 0) {
-                throw new IllegalArgumentException("LeadSource ID must be a positive integer");
-            }
-            if (lead.getCost() < 0) {
-                throw new IllegalArgumentException("Cost cannot be negative");
-            }
-            if (lead.getGross() < 0) {
-                throw new IllegalArgumentException("Gross cannot be negative");
-            }
-            if (!leadSourceIds.add(lead.getLeadSourceId())) {
-                throw new IllegalArgumentException("Duplicate LeadSource ID found: " + lead.getLeadSourceId());
-            }
-        }
-    }
+    // Execute
+    ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
 
-    private DealerLeadSourceCostAndGrossEntity mapToEntity(LeadSource lead, int dealerId) {
-        DealerLeadSourceCostAndGrossEntity entity = new DealerLeadSourceCostAndGrossEntity();
-        entity.setCost(lead.getCost());
-        entity.setGross(lead.getGross());
-        entity.setLeadSourceId(lead.getLeadSourceId());
-        entity.setInternalDealerId(dealerId);
-        return entity;
-    }
+    // Verify
+    assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+}
+
+
+
+
+@Test
+public void testProcessDealerData_Exception() {
+    // Setup
+    int dealerId = 1;
+    doThrow(new RuntimeException("Unexpected error"))
+        .when(dealerCostAndGross).getAllLeadSources(anyInt(), anyInt());
+
+    // Execute
+    ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+    // Verify
+    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
 }
