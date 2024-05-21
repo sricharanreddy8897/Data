@@ -1,73 +1,59 @@
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.Arrays;
+@Test
+public void whenDealerIdIsNonPositive_thenThrowException() {
+    DealerCostAndGross mockCostAndGross = new DealerCostAndGross(); // Assuming you have a no-arg constructor
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        dealerService.processDealerData(0, mockCostAndGross); // Using zero to test boundary condition
+    });
 
-public class DealerServiceTest {
-
-    private DealerService dealerService = new DealerService();
-
-    @Test
-    public void testValidateInput_DealerIdNegative() {
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross();
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(-1, dealerCostAndGross);
-        });
-        assertEquals("Dealer ID must be a positive integer", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateInput_LeadSourceIdNegative() {
-        Lead lead = new Lead(-1, 100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("LeadSource ID must be a positive integer", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateInput_CostNegative() {
-        Lead lead = new Lead(1, -100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("Cost cannot be negative", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateInput_GrossNegative() {
-        Lead lead = new Lead(1, 100, -200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("Gross cannot be negative", exception.getMessage());
-    }
-
-    @Test
-    public void testValidateInput_DuplicateLeadSourceId() {
-        Lead lead1 = new Lead(1, 100, 200);
-        Lead lead2 = new Lead(1, 150, 250); // Duplicate ID
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertTrue(exception.getMessage().contains("Duplicate LeadSource ID found: 1"));
-    }
-
-    @Test
-    public void testValidateInput_ValidInput() {
-        Lead lead1 = new Lead(1, 100, 200);
-        Lead lead2 = new Lead(2, 150, 250);
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
-
-        assertDoesNotThrow(() -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-    }
+    assertTrue(exception.getMessage().contains("Dealer ID must be a positive integer"));
 }
+
+
+
+@Test
+public void whenCostIsNegative_thenThrowException() {
+    DealerCostAndGross mockCostAndGross = new DealerCostAndGross();
+    Lead lead = new Lead(); // Assuming you have setters to set these values
+    lead.setCost(-1.0);
+    mockCostAndGross.setLeadSources(Arrays.asList(lead));
+    
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        dealerService.processDealerData(1, mockCostAndGross);
+    });
+
+    assertTrue(exception.getMessage().contains("Cost cannot be negative"));
+}
+
+@Test
+public void whenGrossIsNegative_thenThrowException() {
+    DealerCostAndGross mockCostAndGross = new DealerCostAndGross();
+    Lead lead = new Lead();
+    lead.setGross(-1.0);
+    mockCostAndGross.setLeadSources(Arrays.asList(lead));
+    
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        dealerService.processDealerData(1, mockCostAndGross);
+    });
+
+    assertTrue(exception.getMessage().contains("Gross cannot be negative"));
+}
+
+
+@Test
+public void whenDuplicateLeadSourceIds_thenThrowException() {
+    DealerCostAndGross mockCostAndGross = new DealerCostAndGross();
+    Lead lead1 = new Lead();
+    lead1.setLeadSourceId(1);
+    Lead lead2 = new Lead();
+    lead2.setLeadSourceId(1); // Duplicate ID
+    mockCostAndGross.setLeadSources(Arrays.asList(lead1, lead2));
+    
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        dealerService.processDealerData(1, mockCostAndGross);
+    });
+
+    assertTrue(exception.getMessage().contains("Duplicate LeadSource ID found"));
+}
+
+
+
