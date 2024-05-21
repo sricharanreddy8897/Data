@@ -1,81 +1,73 @@
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.ResponseEntity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import java.util.Arrays;
 
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
+public class DealerServiceTest {
 
-@Service
-public class DealerService {
+    private DealerService dealerService = new DealerService();
 
-    private static final Logger log = LoggerFactory.getLogger(DealerService.class);
-
-    private final CostAndGrossDetailsRepository costAndGrossDetailsRepository;
-
-    public DealerService(CostAndGrossDetailsRepository costAndGrossDetailsRepository) {
-        this.costAndGrossDetailsRepository = costAndGrossDetailsRepository;
+    @Test
+    public void testValidateInput_DealerIdNegative() {
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross();
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            dealerService.validateInput(-1, dealerCostAndGross);
+        });
+        assertEquals("Dealer ID must be a positive integer", exception.getMessage());
     }
 
-    @Transactional
-    public ResponseEntity<Void> processDealerData(int dealerId, DealerCostAndGross dealerCostAndGross) {
-        try {
-            // Add Feasible Validations
-            validateInput(dealerId, dealerCostAndGross);
+    @Test
+    public void testValidateInput_LeadSourceIdNegative() {
+        Lead lead = new Lead(-1, 100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
 
-            List<DealerLeadSourceCostAndGrossEntity> entities = dealerCostAndGross.getLeadSources().stream()
-                    .map(lead -> mapToEntity(lead, dealerId))
-                    .collect(Collectors.toList());
-
-            // Find the events for monitoring
-            log.info("Processed {} lead sources for dealer ID {}", entities.size(), dealerId);
-
-            costAndGrossDetailsRepository.saveAll(entities);
-
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            // Handle exception, log error, etc.
-            log.error("Error while processing dealer data", e);
-            return ResponseEntity.internalServerError().build();
-        }
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            dealerService.validateInput(1, dealerCostAndGross);
+        });
+        assertEquals("LeadSource ID must be a positive integer", exception.getMessage());
     }
 
-    private void validateInput(int dealerId, DealerCostAndGross dealerCostAndGross) {
-        if (dealerCostAndGross == null || dealerCostAndGross.getLeadSources() == null || dealerCostAndGross.getLeadSources().isEmpty()) {
-            throw new IllegalArgumentException("DealerCostAndGross and its LeadSources cannot be null or empty");
-        }
+    @Test
+    public void testValidateInput_CostNegative() {
+        Lead lead = new Lead(1, -100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
 
-        if (dealerId <= 0) {
-            throw new IllegalArgumentException("Dealer ID must be a positive integer");
-        }
-
-        Set<Integer> leadSourceIds = new HashSet<>();
-        for (LeadSource lead : dealerCostAndGross.getLeadSources()) {
-            if (lead.getLeadSourceId() <= 0) {
-                throw new IllegalArgumentException("LeadSource ID must be a positive integer");
-            }
-            if (lead.getCost() < 0) {
-                throw new IllegalArgumentException("Cost cannot be negative");
-            }
-            if (lead.getGross() < 0) {
-                throw new IllegalArgumentException("Gross cannot be negative");
-            }
-            if (!leadSourceIds.add(lead.getLeadSourceId())) {
-                throw new IllegalArgumentException("Duplicate LeadSource ID found: " + lead.getLeadSourceId());
-            }
-        }
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            dealerService.validateInput(1, dealerCostAndGross);
+        });
+        assertEquals("Cost cannot be negative", exception.getMessage());
     }
 
-    private DealerLeadSourceCostAndGrossEntity mapToEntity(LeadSource lead, int dealerId) {
-        DealerLeadSourceCostAndGrossEntity entity = new DealerLeadSourceCostAndGrossEntity();
-        entity.setCost(lead.getCost());
-        entity.setGross(lead.getGross());
-        entity.setLeadSourceId(lead.getLeadSourceId());
-        entity.setInternalDealerId(dealerId);
-        return entity;
+    @Test
+    public void testValidateInput_GrossNegative() {
+        Lead lead = new Lead(1, 100, -200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            dealerService.validateInput(1, dealerCostAndGross);
+        });
+        assertEquals("Gross cannot be negative", exception.getMessage());
+    }
+
+    @Test
+    public void testValidateInput_DuplicateLeadSourceId() {
+        Lead lead1 = new Lead(1, 100, 200);
+        Lead lead2 = new Lead(1, 150, 250); // Duplicate ID
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            dealerService.validateInput(1, dealerCostAndGross);
+        });
+        assertTrue(exception.getMessage().contains("Duplicate LeadSource ID found: 1"));
+    }
+
+    @Test
+    public void testValidateInput_ValidInput() {
+        Lead lead1 = new Lead(1, 100, 200);
+        Lead lead2 = new Lead(2, 150, 250);
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
+
+        assertDoesNotThrow(() -> {
+            dealerService.validateInput(1, dealerCostAndGross);
+        });
     }
 }
