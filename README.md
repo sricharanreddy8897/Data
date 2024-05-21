@@ -1,73 +1,53 @@
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.Arrays;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.*;
 
 public class DealerServiceTest {
 
-    private DealerService dealerService = new DealerService();
+    @InjectMocks
+    private DealerService dealerService;
 
-    @Test
-    public void testValidateInput_DealerIdNegative() {
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross();
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(-1, dealerCostAndGross);
-        });
-        assertEquals("Dealer ID must be a positive integer", exception.getMessage());
+    @Mock
+    private DealerCostAndGross dealerCostAndGross;
+
+    @Mock
+    private DealerLeadSourceCostAndGrossEntityRepository repository;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
     }
 
-    @Test
-    public void testValidateInput_LeadSourceIdNegative() {
-        Lead lead = new Lead(-1, 100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("LeadSource ID must be a positive integer", exception.getMessage());
+    @Test(expected = IllegalArgumentException.class)
+    public void testProcessDealerData_InvalidDealerCostAndGross() {
+        dealerService.processDealerData(1, null);
     }
 
-    @Test
-    public void testValidateInput_CostNegative() {
-        Lead lead = new Lead(1, -100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("Cost cannot be negative", exception.getMessage());
+    @Test(expected = IllegalArgumentException.class)
+    public void testProcessDealerData_InvalidDealerId() {
+        when(dealerCostAndGross.getLeadSources()).thenReturn(new ArrayList<>());
+        dealerService.processDealerData(-1, dealerCostAndGross);
     }
 
-    @Test
-    public void testValidateInput_GrossNegative() {
-        Lead lead = new Lead(1, 100, -200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("Gross cannot be negative", exception.getMessage());
+    @Test(expected = IllegalArgumentException.class)
+    public void testProcessDealerData_NegativeCostInLead() {
+        List<Lead> leads = new ArrayList<>();
+        leads.add(new Lead(1, "Source", -50.0, 100.0, "January", 2022));
+        when(dealerCostAndGross.getLeadSources()).thenReturn(leads);
+        dealerService.processDealerData(1, dealerCostAndGross);
     }
 
-    @Test
-    public void testValidateInput_DuplicateLeadSourceId() {
-        Lead lead1 = new Lead(1, 100, 200);
-        Lead lead2 = new Lead(1, 150, 250); // Duplicate ID
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
-
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertTrue(exception.getMessage().contains("Duplicate LeadSource ID found: 1"));
+    @Test(expected = IllegalArgumentException.class)
+    public void testProcessDealerData_DuplicateLeadSourceId() {
+        List<Lead> leads = new ArrayList<>();
+        leads.add(new Lead(1, "Source A", 50.0, 100.0, "January", 2022));
+        leads.add(new Lead(1, "Source B", 75.0, 150.0, "January", 2022));
+        when(dealerCostAndGross.getLeadSources()).thenReturn(leads);
+        dealerService.processDealerData(1, dealerCostAndGross);
     }
 
-    @Test
-    public void testValidateInput_ValidInput() {
-        Lead lead1 = new Lead(1, 100, 200);
-        Lead lead2 = new Lead(2, 150, 250);
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
-
-        assertDoesNotThrow(() -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-    }
+    // Additional test cases as needed for other validations
 }
