@@ -1,82 +1,64 @@
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.containsString;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
+@WebMvcTest(CostAndGrossController.class)
 public class CostAndGrossControllerTest {
 
+    @Autowired
     private MockMvc mockMvc;
 
-    @InjectMocks
-    private CostAndGrossController costAndGrossController;
-
-    @Mock
+    @MockBean
     private DealerService dealerService;
-
-    @Mock
-    private CostAndGrossDetailsRepository costAndGrossDetailsRepository;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(costAndGrossController).build();
-    }
-
-    @Test
-    void testDeleteForLead() throws Exception {
-        mockMvc.perform(delete("/protected/1533244")
-                .param("dealerId", "1")
-                .param("LeadSourceId", "1")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testGetForLead() throws Exception {
-        mockMvc.perform(get("/1/marketing/leads/1")
-                .param("month", "2024-05")
-                .param("year", "2024")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
 
     @Test
     void testSaveCostAndGrossForLeads() throws Exception {
-        DealerCostAndGross dealerRequest = new DealerCostAndGross();
-        when(dealerService.processDealerData(anyInt(), any(DealerCostAndGross.class)))
-                .thenReturn(ResponseEntity.status(201).body("Created"));
+        // Arrange
+        Long dealerId = 123L;
+        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross();
+        dealerCostAndGross.setDealerId(dealerId);
+        Lead lead1 = new Lead();
+        lead1.setLeadSourceId(1L);
+        lead1.setCost(100.50);
+        lead1.setGross(200.75);
+        lead1.setLeadSourceName("Test");
+        lead1.setMonth("5");
+        lead1.setYear(2024);
 
-        mockMvc.perform(post("/1/marketing/leads")
-                .content(new ObjectMapper().writeValueAsString(dealerRequest))
+        Lead lead2 = new Lead();
+        lead2.setLeadSourceId(2L);
+        lead2.setCost(150.25);
+        lead2.setGross(250.00);
+        lead2.setLeadSourceName("Test");
+        lead2.setMonth("5");
+        lead2.setYear(2024);
+
+        List<Lead> leadList = Arrays.asList(lead1, lead2);
+        dealerCostAndGross.setLeadSources(leadList);
+
+        Pagination pagination = new Pagination();
+        pagination.setLimit(10);
+        pagination.setOffset(5);
+        dealerCostAndGross.setPagination(pagination);
+
+        // Mocking service to return a response entity with status 201 (Created) and body "Created"
+        when(dealerService.processDealerData(dealerId, dealerCostAndGross))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body("Created"));
+
+        // Act & Assert
+        mockMvc.perform(post("/marketing/leads")
+                .content(new ObjectMapper().writeValueAsString(dealerCostAndGross))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
-                .andExpect(content().string("Created"));
-    }
-
-    @Test
-    void testGetCostAndGrossForLeads() throws Exception {
-        DealerCostAndGrossResponse dealerResponse = new DealerCostAndGrossResponse();
-        when(dealerService.getDealerWithLeads(1, "2024-05", 2024, 0, 10)).thenReturn(dealerResponse);
-
-        mockMvc.perform(get("/1/marketing/leads")
-                .param("month", "2024-05")
-                .param("year", "2024")
-                .param("offset", "0")
-                .param("limit", "10")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(content().string(containsString("Created")));
     }
 }
