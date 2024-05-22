@@ -1,80 +1,41 @@
-    @Test
-    public void testProcessDealerData_NullDealerCostAndGross() {
-        dealerCostAndGross = null;
+import org.junit.jupiter.api.Test;
 
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+import java.sql.Timestamp;
 
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("DealerCostAndGross and its LeadSources cannot be null or empty", response.getBody());
-    }
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class DealerLeadSourceCostAndGrossEntityTest {
 
     @Test
-    public void testProcessDealerData_EmptyLeadSources() {
-        dealerCostAndGross.setLeadSources(Arrays.asList());
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("DealerCostAndGross and its LeadSources cannot be null or empty", response.getBody());
+    public void testDealerLeadSourceCostAndGrossEntity() {
+        DealerLeadSourceCostAndGrossEntity entity = new DealerLeadSourceCostAndGrossEntity();
+        
+        // Set values
+        entity.setId(1);
+        entity.setInternalDealerId(123);
+        entity.setModifiedLeadSource("Modified Source");
+        entity.setMonth("2024-05");
+        entity.setCost(100.50);
+        entity.setGross(200.75);
+        entity.setNet(300.25);
+        entity.setNumberOfSales(10L);
+        entity.setCreatedDate(Timestamp.valueOf("2024-05-15 10:00:00"));
+        entity.setUserUpdated("User123");
+        entity.setUpdatedDate(Timestamp.valueOf("2024-05-16 12:00:00"));
+        entity.setVersionNumber(1);
+        
+        // Assert values
+        assertEquals(1, entity.getId());
+        assertEquals(123, entity.getInternalDealerId());
+        assertEquals("Modified Source", entity.getModifiedLeadSource());
+        assertEquals("2024-05", entity.getMonth());
+        assertEquals(100.50, entity.getCost());
+        assertEquals(200.75, entity.getGross());
+        assertEquals(300.25, entity.getNet());
+        assertEquals(10L, entity.getNumberOfSales());
+        assertEquals(Timestamp.valueOf("2024-05-15 10:00:00"), entity.getCreatedDate());
+        assertEquals("User123", entity.getUserUpdated());
+        assertEquals(Timestamp.valueOf("2024-05-16 12:00:00"), entity.getUpdatedDate());
+        assertEquals(1, entity.getVersionNumber());
     }
-
-    @Test
-    public void testProcessDealerData_NegativeDealerId() {
-        dealerId = -1;
-        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, 200)));
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Dealer ID must be a positive integer", response.getBody());
-    }
-
-    @Test
-    public void testProcessDealerData_NegativeLeadSourceId() {
-        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(-1, 100, 200)));
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("LeadSource ID must be a positive integer", response.getBody());
-    }
-
-    @Test
-    public void testProcessDealerData_NegativeCost() {
-        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, -100, 200)));
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Cost cannot be negative", response.getBody());
-    }
-
-    @Test
-    public void testProcessDealerData_NegativeGross() {
-        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, -200)));
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Gross cannot be negative", response.getBody());
-    }
-
-    @Test
-    public void testProcessDealerData_DuplicateLeadSourceId() {
-        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, 200), new Lead(1, 150, 250)));
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Duplicate LeadSource ID found: 1", response.getBody());
-    }
-
-    @Test
-    public void testProcessDealerData_Success() {
-        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, 200), new Lead(2, 150, 250)));
-
-        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals("Cost and Gross for the selected lead sources is saved successfully", response.getBody());
-    }
+}
