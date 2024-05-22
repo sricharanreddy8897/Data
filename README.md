@@ -1,28 +1,38 @@
- import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CostAndGrossController.class)
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 public class CostAndGrossControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @InjectMocks
+    private CostAndGrossController costAndGrossController;
+
+    @Mock
     private DealerService dealerService;
 
-    @MockBean
+    @Mock
     private CostAndGrossDetailsRepository costAndGrossDetailsRepository;
 
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(costAndGrossController).build();
+    }
+
     @Test
-    public void testDeleteForLead() throws Exception {
+    void testDeleteForLead() throws Exception {
         mockMvc.perform(delete("/protected/1533244")
                 .param("dealerId", "1")
                 .param("LeadSourceId", "1")
@@ -31,7 +41,7 @@ public class CostAndGrossControllerTest {
     }
 
     @Test
-    public void testGetForLead() throws Exception {
+    void testGetForLead() throws Exception {
         mockMvc.perform(get("/1/marketing/leads/1")
                 .param("month", "2024-05")
                 .param("year", "2024")
@@ -40,19 +50,20 @@ public class CostAndGrossControllerTest {
     }
 
     @Test
-    public void testSaveCostAndGrossForLeads() throws Exception {
+    void testSaveCostAndGrossForLeads() throws Exception {
         DealerCostAndGross dealerRequest = new DealerCostAndGross();
-        when(dealerService.processDealerData(1, dealerRequest)).thenReturn(ResponseEntity.status(201).body("Created"));
+        when(dealerService.processDealerData(anyInt(), any(DealerCostAndGross.class)))
+                .thenReturn(ResponseEntity.status(201).body("Created"));
 
         mockMvc.perform(post("/1/marketing/leads")
-                .content("{\"dealerId\":1,\"leadSources\":[],\"pagination\":{}}")
+                .content(new ObjectMapper().writeValueAsString(dealerRequest))
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(content().string("Created"));
     }
 
     @Test
-    public void testGetCostAndGrossForLeads() throws Exception {
+    void testGetCostAndGrossForLeads() throws Exception {
         DealerCostAndGrossResponse dealerResponse = new DealerCostAndGrossResponse();
         when(dealerService.getDealerWithLeads(1, "2024-05", 2024, 0, 10)).thenReturn(dealerResponse);
 
