@@ -9,30 +9,45 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+
+@WebMvcTest(CostAndGrossController.class)
 public class CostAndGrossControllerTest {
 
     private MockMvc mockMvc;
+
+    @MockBean
     private DealerService dealerService; // Mocked service
-    private CostAndGrossDetailsRepository costAndGrossDetailsRepository; // Mocked repository
+
+    @InjectMocks
+    private CostAndGrossController controller;
 
     @BeforeEach
     public void setup() {
-        dealerService = mock(DealerService.class);
-        costAndGrossDetailsRepository = mock(CostAndGrossDetailsRepository.class);
-        CostAndGrossController controller = new CostAndGrossController(dealerService, costAndGrossDetailsRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
-    public void testDeleteForLead() throws Exception {
-        int dealerId = 1; // Example dealer ID
-        int leadSourceId = 10; // Example lead source ID
+    public void testGetCostAndGrossForLeads_NoDealerFound() throws Exception {
+        int dealerId = 1;
+        String month = "June";
+        int year = 2022;
+        int offset = 0;
+        int limit = 10;
 
-        mockMvc.perform(delete("/protected/1533244/{dealerId}/{leadSourceId}", dealerId, leadSourceId)
+        // Setup the mock to return null, simulating no dealer found
+        when(dealerService.getDealerWithLeads(dealerId, month, year, offset, limit)).thenReturn(null);
+
+        mockMvc.perform(get("/{dealerId}/marketing/leads", dealerId)
+                .param("month", month)
+                .param("year", String.valueOf(year))
+                .param("offset", String.valueOf(offset))
+                .param("limit", String.valueOf(limit))
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-
-        // Optionally verify that interactions with mock objects occur as expected
-        verify(costAndGrossDetailsRepository, times(1)).deleteByDealerIdAndLeadSourceId(dealerId, leadSourceId);
+                .andExpect(status().isNotFound())
+                .andExpect(content().string(containsString("Dealer with ID " + dealerId + " not found or no leads available for the specified period.")));
     }
 }
