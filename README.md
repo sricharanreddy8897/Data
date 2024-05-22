@@ -1,73 +1,80 @@
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.Arrays;
-
-public class DealerServiceTest {
-
-    private DealerService dealerService = new DealerService();
-
     @Test
-    public void testValidateInput_DealerIdNegative() {
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross();
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(-1, dealerCostAndGross);
-        });
-        assertEquals("Dealer ID must be a positive integer", exception.getMessage());
+    public void testProcessDealerData_NullDealerCostAndGross() {
+        dealerCostAndGross = null;
+
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("DealerCostAndGross and its LeadSources cannot be null or empty", response.getBody());
     }
 
     @Test
-    public void testValidateInput_LeadSourceIdNegative() {
-        Lead lead = new Lead(-1, 100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
+    public void testProcessDealerData_EmptyLeadSources() {
+        dealerCostAndGross.setLeadSources(Arrays.asList());
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("LeadSource ID must be a positive integer", exception.getMessage());
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("DealerCostAndGross and its LeadSources cannot be null or empty", response.getBody());
     }
 
     @Test
-    public void testValidateInput_CostNegative() {
-        Lead lead = new Lead(1, -100, 200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
+    public void testProcessDealerData_NegativeDealerId() {
+        dealerId = -1;
+        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, 200)));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("Cost cannot be negative", exception.getMessage());
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Dealer ID must be a positive integer", response.getBody());
     }
 
     @Test
-    public void testValidateInput_GrossNegative() {
-        Lead lead = new Lead(1, 100, -200); // Assuming Lead constructor is Lead(int id, int cost, int gross)
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead));
+    public void testProcessDealerData_NegativeLeadSourceId() {
+        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(-1, 100, 200)));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertEquals("Gross cannot be negative", exception.getMessage());
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("LeadSource ID must be a positive integer", response.getBody());
     }
 
     @Test
-    public void testValidateInput_DuplicateLeadSourceId() {
-        Lead lead1 = new Lead(1, 100, 200);
-        Lead lead2 = new Lead(1, 150, 250); // Duplicate ID
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
+    public void testProcessDealerData_NegativeCost() {
+        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, -100, 200)));
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
-        assertTrue(exception.getMessage().contains("Duplicate LeadSource ID found: 1"));
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Cost cannot be negative", response.getBody());
     }
 
     @Test
-    public void testValidateInput_ValidInput() {
-        Lead lead1 = new Lead(1, 100, 200);
-        Lead lead2 = new Lead(2, 150, 250);
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross(Arrays.asList(lead1, lead2));
+    public void testProcessDealerData_NegativeGross() {
+        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, -200)));
 
-        assertDoesNotThrow(() -> {
-            dealerService.validateInput(1, dealerCostAndGross);
-        });
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Gross cannot be negative", response.getBody());
     }
-}
+
+    @Test
+    public void testProcessDealerData_DuplicateLeadSourceId() {
+        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, 200), new Lead(1, 150, 250)));
+
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("Duplicate LeadSource ID found: 1", response.getBody());
+    }
+
+    @Test
+    public void testProcessDealerData_Success() {
+        dealerCostAndGross.setLeadSources(Arrays.asList(new Lead(1, 100, 200), new Lead(2, 150, 250)));
+
+        ResponseEntity<String> response = dealerService.processDealerData(dealerId, dealerCostAndGross);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals("Cost and Gross for the selected lead sources is saved successfully", response.getBody());
+    }
