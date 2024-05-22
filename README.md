@@ -1,82 +1,39 @@
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
-public class CostAndGrossControllerTest {
-
-    private MockMvc mockMvc;
-
-    @InjectMocks
-    private CostAndGrossController costAndGrossController;
-
-    @Mock
-    private DealerService dealerService;
-
-    @Mock
-    private CostAndGrossDetailsRepository costAndGrossDetailsRepository;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(costAndGrossController).build();
-    }
+class DealerLeadSourceCostAndGrossEntityTest {
 
     @Test
-    void testDeleteForLead() throws Exception {
-        mockMvc.perform(delete("/protected/1533244")
-                .param("dealerId", "1")
-                .param("LeadSourceId", "1")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testGetForLead() throws Exception {
-        mockMvc.perform(get("/1/marketing/leads/1")
-                .param("month", "2024-05")
-                .param("year", "2024")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testSaveCostAndGrossForLeads() throws Exception {
-        DealerCostAndGross dealerRequest = new DealerCostAndGross();
-        when(dealerService.processDealerData(anyInt(), any(DealerCostAndGross.class)))
-                .thenReturn(ResponseEntity.status(201).body("Created"));
-
-        mockMvc.perform(post("/1/marketing/leads")
-                .content(new ObjectMapper().writeValueAsString(dealerRequest))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().string("Created"));
-    }
-
-    @Test
-    void testGetCostAndGrossForLeads() throws Exception {
-        DealerCostAndGrossResponse dealerResponse = new DealerCostAndGrossResponse();
-        when(dealerService.getDealerWithLeads(1, "2024-05", 2024, 0, 10)).thenReturn(dealerResponse);
-
-        mockMvc.perform(get("/1/marketing/leads")
-                .param("month", "2024-05")
-                .param("year", "2024")
-                .param("offset", "0")
-                .param("limit", "10")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+    void testLombokGeneratedMethods() {
+        DealerLeadSourceCostAndGrossEntity entity = new DealerLeadSourceCostAndGrossEntity();
+        
+        entity.setId(1);
+        entity.setInternalDealerId(123);
+        entity.setModifiedLeadSource("online");
+        entity.setMonth("January");
+        entity.setCost(100.0);
+        entity.setGross(200.0);
+        
+        assertEquals(1, entity.getId());
+        assertEquals(123, entity.getInternalDealerId());
+        assertEquals("online", entity.getModifiedLeadSource());
+        assertEquals("January", entity.getMonth());
+        assertEquals(100.0, entity.getCost());
+        assertEquals(200.0, entity.getGross());
+        
+        // Test toString, equals, and hashCode if necessary
+        String expectedToString = "DealerLeadSourceCostAndGrossEntity(id=1, internalDealerId=123, modifiedLeadSource=online, month=January, cost=100.0, gross=200.0)";
+        assertEquals(expectedToString, entity.toString());
+        
+        DealerLeadSourceCostAndGrossEntity entity2 = new DealerLeadSourceCostAndGrossEntity();
+        entity2.setId(1);
+        entity2.setInternalDealerId(123);
+        entity2.setModifiedLeadSource("online");
+        entity2.setMonth("January");
+        entity2.setCost(100.0);
+        entity2.setGross(200.0);
+        
+        assertEquals(entity, entity2);
+        assertEquals(entity.hashCode(), entity2.hashCode());
     }
 }
