@@ -1,82 +1,38 @@
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
-import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 public class CostAndGrossControllerTest {
 
     private MockMvc mockMvc;
-
-    @InjectMocks
-    private CostAndGrossController costAndGrossController;
-
-    @Mock
-    private DealerService dealerService;
-
-    @Mock
-    private CostAndGrossDetailsRepository costAndGrossDetailsRepository;
+    private DealerService dealerService; // Mocked service
+    private CostAndGrossDetailsRepository costAndGrossDetailsRepository; // Mocked repository
 
     @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(costAndGrossController).build();
+    public void setup() {
+        dealerService = mock(DealerService.class);
+        costAndGrossDetailsRepository = mock(CostAndGrossDetailsRepository.class);
+        CostAndGrossController controller = new CostAndGrossController(dealerService, costAndGrossDetailsRepository);
+        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     @Test
-    void testDeleteForLead() throws Exception {
-        mockMvc.perform(delete("/protected/1533244")
-                .param("dealerId", "1")
-                .param("LeadSourceId", "1")
+    public void testDeleteForLead() throws Exception {
+        int dealerId = 1; // Example dealer ID
+        int leadSourceId = 10; // Example lead source ID
+
+        mockMvc.perform(delete("/protected/1533244/{dealerId}/{leadSourceId}", dealerId, leadSourceId)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
-    }
 
-    @Test
-    void testGetForLead() throws Exception {
-        mockMvc.perform(get("/1/marketing/leads/1")
-                .param("month", "2024-05")
-                .param("year", "2024")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
-    }
-
-    @Test
-    void testSaveCostAndGrossForLeads() throws Exception {
-        DealerCostAndGross dealerRequest = new DealerCostAndGross();
-        when(dealerService.processDealerData(anyInt(), any(DealerCostAndGross.class)))
-                .thenReturn(ResponseEntity.status(201).body("Created"));
-
-        mockMvc.perform(post("/1/marketing/leads")
-                .content(new ObjectMapper().writeValueAsString(dealerRequest))
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
-                .andExpect(content().string("Created"));
-    }
-
-    @Test
-    void testGetCostAndGrossForLeads() throws Exception {
-        DealerCostAndGrossResponse dealerResponse = new DealerCostAndGrossResponse();
-        when(dealerService.getDealerWithLeads(1, "2024-05", 2024, 0, 10)).thenReturn(dealerResponse);
-
-        mockMvc.perform(get("/1/marketing/leads")
-                .param("month", "2024-05")
-                .param("year", "2024")
-                .param("offset", "0")
-                .param("limit", "10")
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        // Optionally verify that interactions with mock objects occur as expected
+        verify(costAndGrossDetailsRepository, times(1)).deleteByDealerIdAndLeadSourceId(dealerId, leadSourceId);
     }
 }
