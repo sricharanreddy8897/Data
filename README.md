@@ -1,54 +1,67 @@
-import org.junit.jupiter.api.Test;
+ import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
-import java.util.List;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+@WebMvcTest(CostAndGrossController.class)
+public class CostAndGrossControllerTest {
 
-public class DealerCostAndGrossTest {
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockBean
+    private DealerService dealerService;
+
+    @MockBean
+    private CostAndGrossDetailsRepository costAndGrossDetailsRepository;
 
     @Test
-    public void testDealerCostAndGross() {
-        // Create Lead objects
-        Lead lead1 = new Lead();
-        lead1.setLeadSourceId(1);
-        lead1.setCost(100.50);
-        lead1.setGross(200.75);
+    public void testDeleteForLead() throws Exception {
+        mockMvc.perform(delete("/protected/1533244")
+                .param("dealerId", "1")
+                .param("LeadSourceId", "1")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
 
-        Lead lead2 = new Lead();
-        lead2.setLeadSourceId(2);
-        lead2.setCost(150.25);
-        lead2.setGross(250.00);
+    @Test
+    public void testGetForLead() throws Exception {
+        mockMvc.perform(get("/1/marketing/leads/1")
+                .param("month", "2024-05")
+                .param("year", "2024")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
 
-        List<Lead> leadList = Arrays.asList(lead1, lead2);
+    @Test
+    public void testSaveCostAndGrossForLeads() throws Exception {
+        DealerCostAndGross dealerRequest = new DealerCostAndGross();
+        when(dealerService.processDealerData(1, dealerRequest)).thenReturn(ResponseEntity.status(201).body("Created"));
 
-        // Create Pagination object
-        Pagination pagination = new Pagination();
-        pagination.setLimit(10);
-        pagination.setOffset(5);
+        mockMvc.perform(post("/1/marketing/leads")
+                .content("{\"dealerId\":1,\"leadSources\":[],\"pagination\":{}}")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(content().string("Created"));
+    }
 
-        // Create DealerCostAndGross object
-        DealerCostAndGross dealerCostAndGross = new DealerCostAndGross();
-        dealerCostAndGross.setDealerId(123);
-        dealerCostAndGross.setLeadSources(leadList);
-        dealerCostAndGross.setPagination(pagination);
+    @Test
+    public void testGetCostAndGrossForLeads() throws Exception {
+        DealerCostAndGrossResponse dealerResponse = new DealerCostAndGrossResponse();
+        when(dealerService.getDealerWithLeads(1, "2024-05", 2024, 0, 10)).thenReturn(dealerResponse);
 
-        // Assert DealerCostAndGross values
-        assertEquals(123, dealerCostAndGross.getDealerId());
-        assertEquals(leadList, dealerCostAndGross.getLeadSources());
-        assertEquals(pagination, dealerCostAndGross.getPagination());
-
-        // Assert individual Lead values
-        assertEquals(1, dealerCostAndGross.getLeadSources().get(0).getLeadSourceId());
-        assertEquals(100.50, dealerCostAndGross.getLeadSources().get(0).getCost());
-        assertEquals(200.75, dealerCostAndGross.getLeadSources().get(0).getGross());
-
-        assertEquals(2, dealerCostAndGross.getLeadSources().get(1).getLeadSourceId());
-        assertEquals(150.25, dealerCostAndGross.getLeadSources().get(1).getCost());
-        assertEquals(250.00, dealerCostAndGross.getLeadSources().get(1).getGross());
-
-        // Assert Pagination values
-        assertEquals(10, dealerCostAndGross.getPagination().getLimit());
-        assertEquals(5, dealerCostAndGross.getPagination().getOffset());
+        mockMvc.perform(get("/1/marketing/leads")
+                .param("month", "2024-05")
+                .param("year", "2024")
+                .param("offset", "0")
+                .param("limit", "10")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
     }
 }
