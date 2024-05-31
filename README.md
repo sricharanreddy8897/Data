@@ -1,9 +1,2 @@
 
-SELECT fulfillment_id
-FROM custevents
-WHERE event_type = 7
-  AND fulfillment_id NOT IN (
-    SELECT fulfillment_id
-    FROM custevents
-    WHERE event_type IN (0, 1)
-  );
+The missing records were sent successfully, but we are unable to see the event types because Mercury failed to process feedback events from Gumbo. This issue occurred due to an update to some components in Mercury.
