@@ -239,4 +239,22 @@ public class DealerServiceImpl implements DealerService {
 }
 
 
+@Override
+    public ResponseEntity<String> processDealerData(int dealerId, DealerCostAndGross dealerRequest) {
+        String backendEndpoint = backendUrl + "/dealers/" + dealerId + "/marketing/lead-sources/import-cost-gross-batch";
+
+        try {
+            HttpEntity<DealerCostAndGross> entity = new HttpEntity<>(dealerRequest);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    backendEndpoint,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+            return new ResponseEntity<>(response.getBody(), response.getStatusCode());
+
+
+
+
+
 
