@@ -184,3 +184,59 @@ Copy code
 </dependency>
 Summary
 This structure ensures that your controller, service, and model classes are properly separated and organized, following the standard practices of a Spring Boot application. This makes the code more maintainable and easier to manage.
+
+package com.example.bff.service.impl;
+
+import com.example.bff.model.DealerCostAndGross;
+import com.example.bff.service.DealerService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
+
+@Service
+public class DealerServiceImpl implements DealerService {
+
+    private final RestTemplate restTemplate;
+    private final String backendUrl = "http://your-backend-service-url"; // Replace with your actual backend URL
+
+    @Autowired
+    public DealerServiceImpl(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @Override
+    public ResponseEntity<String> processDealerData(int dealerId, DealerCostAndGross dealerRequest) {
+        String backendEndpoint = backendUrl + "/dealerId/marketing/lead-sources/import-cost-gross-batch";
+        
+        try {
+            // Create the HTTP entity with the request body
+            HttpEntity<DealerCostAndGross> entity = new HttpEntity<>(dealerRequest);
+            
+            // Make the POST request using RestTemplate
+            ResponseEntity<String> response = restTemplate.exchange(
+                    backendEndpoint,
+                    HttpMethod.POST,
+                    entity,
+                    String.class,
+                    dealerId
+            );
+
+            // Return the response from the backend service
+            return new ResponseEntity<>(response.getBody(), response.getStatusCode());
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            // Return the error response from the backend service
+            return ResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            // Return a generic internal server error response
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred while processing the request.");
+        }
+    }
+}
+
+
+
