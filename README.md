@@ -66,8 +66,7 @@ public class DealerServiceImplTest {
         int dealerId = 1;
 
         DealerCostAndGrossResponse dealerResponse = new DealerCostAndGrossResponse();
-        dealerResponse.setLeadSources(Collections.emptyList()); // Adjust based on your model
-
+        dealerResponse.setLeadSources(Collections.emptyList()); // Ensure leadSources is not null
         ResponseEntity<DealerCostAndGrossResponse> responseEntity = ResponseEntity.ok(dealerResponse);
 
         when(restTemplate.exchange(
@@ -82,6 +81,7 @@ public class DealerServiceImplTest {
 
         // Verify
         assertNotNull(response);
+        assertTrue(response.isDealerGrossFound());
         verify(restTemplate, times(1)).exchange(
                 eq("http://localhost:8089/costandgrossget?month=June&year=2023&offset=0&limit=10"),
                 eq(HttpMethod.GET),
